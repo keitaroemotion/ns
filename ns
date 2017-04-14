@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require "colorize"
+require "net/sftp"
+require 'io/console'
+
+def parse_config
+  key_pair = {}
+  File.open("config", "r").each do |line|
+    linesp = line.split(":").map {|x| x.strip }
+    key_pair[linesp[0].to_sym] = linesp[1]
+  end
+  key_pair
+end
+
+key_pair  = parse_config
+
+@key    = key_pair[:key] 
+@user   = key_pair[:user]
+@host   = key_pair[:host]
+
+print "Enter Passphrase: "
+passphrase = STDIN.noecho(&:gets)
+puts
+
+@options = {
+  keys: @key,
+  passphrase: passphrase,
+  port: 22,
+}
+
+@remote_dir = "/home/ubuntu"
+
+connection = Net::SFTP.start(@host, @user, @options)
+files      = connection.dir.glob(@remote_dir, "**/*")
+
+files.map do |file|
+   puts file.name.green
+end
